@@ -29,15 +29,12 @@ done
 
 [ "$#" -gt 0 ] || usage
 
-missing=()
 for tool in asciinema agg ffmpeg; do
-  command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+  command -v "$tool" >/dev/null 2>&1 || {
+    echo "proofcast: missing dependency: $tool" >&2
+    exit 1
+  }
 done
-
-if [ "${#missing[@]}" -gt 0 ]; then
-  echo "proofcast: missing required binaries: ${missing[*]}" >&2
-  exit 1
-fi
 
 if [ -z "$output" ]; then
   output="$PWD/proofcast-$(date +%Y%m%d-%H%M%S).mp4"
@@ -88,14 +85,22 @@ trap cleanup EXIT
 } >"$runner"
 chmod 700 "$runner"
 
-asciinema record --headless --return --overwrite --command "$runner" "$cast"
+# Fixed geometry: headless recording otherwise falls back to 80x24 and long
+# lines wrap out of view in the rendered video.
+asciinema record --headless --window-size 160x42 --return --overwrite --command "$runner" "$cast"
 command_status=$?
 
-asciinema convert -f txt "$cast" - || exit 1
-agg "$cast" "$gif" || exit 1
+# asciinema >= 3.2 requires --overwrite even when converting to stdout
+asciinema convert --overwrite -f txt "$cast" - || exit 1
+# A proof recording spans the whole run, start to finish — idle is kept, not
+# collapsed (agg's default caps idle gaps at 5s and the video lies about time).
+agg --font-size 16 --idle-time-limit 3600 "$cast" "$gif" || exit 1
+# fps=24 resamples the GIF's variable frame delays to constant framerate —
+# without it the mp4 carries a handful of long-held frames and players stutter
+# and scrub-jump.
 ffmpeg -hide_banner -loglevel error -y -i "$gif" \
   -c:v libx264 -pix_fmt yuv420p \
-  -vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' \
+  -vf 'fps=24,pad=ceil(iw/2)*2:ceil(ih/2)*2' \
   -movflags +faststart "$video" || exit 1
 
 chmod 600 "$video"
