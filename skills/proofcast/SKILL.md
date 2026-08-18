@@ -1,6 +1,6 @@
 ---
 name: proofcast
-description: Records terminal output as a replayable asciicast for review. Use when the user asks to record, capture, or create proof of terminal work.
+description: Records terminal output as a replayable asciicast for review. Use when the user asks to record, capture, 'turn on the bodycam', or create proof of terminal output.
 license: CC0-1.0
 compatibility: Requires bash 4+ and asciinema 3.0+; agg is optional and adds a gif
 metadata:
@@ -58,13 +58,3 @@ Add it to `.gitignore` unless the recordings are meant to be committed.
 
 Share the index for review. Share the gif where a player cannot go, such as a
 pull request comment or a chat message.
-
-## Limits
-
-- The index loads the player from a CDN, so first open needs network. The
-  recordings themselves are embedded in the page. The gif needs neither.
-- The gif collapses idle gaps to 2 seconds so it stays watchable; the cast keeps
-  real time and is the artifact of record for duration. Gif size tracks frame
-  count and resolution, not duration, so a busy recording is the expensive one.
-- The recorded command gets a fresh pty, not your terminal. A command that
-  waits on stdin will hang with no timeout.

@@ -1,10 +1,12 @@
 # Proofcast
 
-Proofcast is a self-contained Claude Code skill that records an explicitly
-requested terminal command or focused validation flow as a replayable
-asciicast, and collects every recording into a browsable HTML index.
+![Christine (1983)](assets/arnie.gif)
 
-## Install
+## Proofcast is an AI bodycam that lets you record the terminal output that _it_ sees, uncovering all the gruesome details... ___what do you mean it was only staging!?___
+
+--- 
+
+### Install
 
 ```bash
 npx skills@latest add killallgit/killall-proof \
@@ -14,33 +16,33 @@ npx skills@latest add killallgit/killall-proof \
   --yes
 ```
 
-Proofcast requires Bash 4+ and the `asciinema` binary, and checks for it before
-recording. Install `agg` as well to also get a gif of each recording.
+There are some pre-reqs:
 
-## Use
+- `asciinema` 3.0+
+- `agg` — optional, only if you want a gif alongside each recording
 
-Ask Claude Code to record a command or validation flow. The skill invokes its
-bundled script directly; it does not install a global executable or change
-`PATH`.
+## How to use
 
-Recordings land in `.proofcast` beside wherever the command ran, unless
-`--root` says otherwise:
+Ask Claude Code to record something. Recordings land in `.proofcast` next to
+wherever it ran:
 
 ```
 .proofcast/index.html
 .proofcast/<slug>/<timestamp>.cast
 .proofcast/<slug>/<timestamp>.stdout.log
-.proofcast/<slug>/<timestamp>.gif          # only when agg is installed
+.proofcast/<slug>/<timestamp>.gif
 ```
 
-`index.html` opens straight from disk and lists every recording newest first,
-replaying the selected one as real text you can pause, scrub, and copy from.
-The cast is the artifact of record: it keeps true timing and stays small, since
-it stores text rather than pixels. The gif is for pasting where a player cannot
-go, such as a pull request comment.
+Open `index.html` from disk. It lists every recording and replays them as real
+text you can pause, scrub, and copy from.
 
-Proofcast records failed commands too, and exits with the recorded command's
-own status.
+## Accountability, as ever, has limits
 
-Add `.proofcast/` to `.gitignore` unless the recordings are meant to be
-committed. Proofcast captures output verbatim and does not redact secrets.
+Output that scrolls faster than the terminal can draw collapses into a single
+frame, so the footage shows the aftermath rather than the incident. The full
+text survives in the log, which nobody watches.
+
+Everything the agent printed is captured verbatim, including your secrets.
+Proofcast does not redact them. Add `.proofcast/` to `.gitignore`.
+
+Recordings are kept until someone deletes them, and someone always does.
