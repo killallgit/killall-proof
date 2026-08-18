@@ -1,22 +1,70 @@
 ---
 name: proofcast
-description: Record an explicitly requested command or focused validation flow as an MP4. Use when the user asks to record, capture, or create video proof of terminal work.
+description: Records terminal output as a replayable asciicast for review. Use when the user asks to record, capture, or create proof of terminal work.
+license: CC0-1.0
+compatibility: Requires bash 4+ and asciinema 3.0+; agg is optional and adds a gif
+metadata:
+  author: killallgit <@archae0pteryx>
 ---
 
-# Proofcast
+# Instructions
 
-Use this skill only when the user explicitly asks to record the work, such as
-“let's record this.”
+When asked to provide "proof", a "recording", "capture", "video" (or related
+terminology), of terminal (shell) output, follow these steps:
 
-1. Choose the command that demonstrates the important behavior. For multiple
-   commands, put the focused flow in a temporary Bash script and record that.
-2. Never include or print passwords, tokens, API keys, or other secrets.
-3. Run `"${CLAUDE_SKILL_DIR}/scripts/proofcast" [--out <video.mp4>] -- <command> [args...]`.
-4. Proofcast checks that `asciinema`, `agg`, and `ffmpeg` are installed before
-   recording. If any are missing, report the script's error and stop.
-5. Proofcast prints the command output followed by the absolute MP4 path. It
-   still creates the video when the recorded command exits unsuccessfully.
-6. When Proofcast finishes, say exactly `I stopped the recording.` and provide
-   a clickable link to the MP4. Also report a failed command's exit status.
+## Prerequisites
 
-Proofcast captures output verbatim and does not redact secrets.
+- asciinema (3.0 or newer)
+- agg (optional; when present, each recording also gets a gif)
+
+1. Confirm asciinema is installed. If not, ask the user to install it, or help
+   install if the situation allows.
+2. Recordings default to `.proofcast` in the current directory, created if
+   missing. Only ask the user for a location when they want them somewhere
+   else, then pass it with `--root`.
+3. Pick the one command that demonstrates the behavior. For a multi-step flow,
+   put the steps in a temporary Bash script and record that instead.
+4. Confirm the command cannot print passwords, tokens, or API keys. Proofcast
+   captures output verbatim and does not redact.
+5. Run `"${CLAUDE_SKILL_DIR}/scripts/proofcast.sh" --name <slug> -- <command> [args...]`,
+   where `<slug>` is a short lowercase-hyphenated name for what is being proven.
+6. Proofcast prints every file it wrote, index last. Report the index as a
+   clickable link and say exactly `I stopped the recording.` Report the exit
+   status if the command failed.
+
+## Bundle layout
+
+Each run adds a timestamped set under a per-slug directory and rebuilds the
+index covering every recording in the root:
+
+```
+<root>/index.html          # <root> is .proofcast unless --root says otherwise
+<root>/<slug>/<timestamp>.cast
+<root>/<slug>/<timestamp>.stdout.log
+<root>/<slug>/<timestamp>.gif          # only when agg is installed
+```
+
+Reuse the same `<slug>` to collect repeat runs of the same proof together.
+`index.html` opens straight from disk, lists every recording newest first, and
+replays the selected one with real text you can pause, scrub, and copy from.
+Rebuild it without recording by running
+`"${CLAUDE_SKILL_DIR}/scripts/proofcast-index.sh" <root>`. The page comes from
+`resources/index.html`, a plain HTML file that opens on its own with an empty
+list; the index script only swaps its `<script id="data">` element for the real
+recordings. Edit that file to change how the index looks.
+
+A `.proofcast` directory inside a repository holds verbatim terminal output.
+Add it to `.gitignore` unless the recordings are meant to be committed.
+
+Share the index for review. Share the gif where a player cannot go, such as a
+pull request comment or a chat message.
+
+## Limits
+
+- The index loads the player from a CDN, so first open needs network. The
+  recordings themselves are embedded in the page. The gif needs neither.
+- The gif collapses idle gaps to 2 seconds so it stays watchable; the cast keeps
+  real time and is the artifact of record for duration. Gif size tracks frame
+  count and resolution, not duration, so a busy recording is the expensive one.
+- The recorded command gets a fresh pty, not your terminal. A command that
+  waits on stdin will hang with no timeout.

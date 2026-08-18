@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Proofcast</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.css">
+<style>
+:root { color-scheme: dark; }
+body { margin: 0 auto; padding: 2rem 1.5rem; max-width: 72rem;
+       font: 14px/1.5 system-ui, sans-serif; background: #14161a; color: #d8dbe0; }
+h1 { margin: 0 0 1.5rem; font-size: 1.1rem; letter-spacing: .08em;
+     text-transform: uppercase; color: #7a828e; }
+#player { margin-bottom: 2rem; }
+ul { margin: 0; padding: 0; list-style: none; }
+li { display: flex; align-items: baseline; gap: 1rem;
+     border-top: 1px solid #262a31; padding: .6rem 0; }
+button { flex: 1; display: flex; align-items: baseline; gap: 1rem; text-align: left;
+         background: none; border: 0; color: inherit; font: inherit;
+         cursor: pointer; padding: 0; }
+button:hover .title, button[aria-current="true"] .title { color: #6cc7a8; }
+.title { min-width: 14rem; font-weight: 600; }
+.stamp { min-width: 11rem; color: #7a828e; font-variant-numeric: tabular-nums; }
+.command { flex: 1; color: #7a828e;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a { color: #7a828e; text-decoration: none; border-bottom: 1px solid #363b44; }
+a:hover { color: #d8dbe0; }
+</style>
+</head>
+<body>
+
+<h1>Proofcast</h1>
+<div id="player"></div>
+<ul id="recordings"></ul>
+
+<!-- proofcast-index.sh replaces this element wholesale. Text is base64 so no
+     recorded terminal output can break out of the page. -->
+<script id="data" type="application/json">{"root":"","recordings":[]}</script>
+
+<template id="row">
+  <li>
+    <button type="button">
+      <span class="title"></span>
+      <span class="stamp"></span>
+      <code class="command"></code>
+    </button>
+    <a class="log">stdout log</a>
+    <a class="gif">gif</a>
+  </li>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+const decode = text => new TextDecoder().decode(
+  Uint8Array.from(atob(text), character => character.charCodeAt(0))
+);
+
+const titleOf = slug => {
+  const words = slug.replace(/-/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
+const data = JSON.parse(document.getElementById('data').textContent);
+const list = document.getElementById('recordings');
+const mount = document.getElementById('player');
+const row = document.getElementById('row');
+
+document.title = `Proofcast — ${decode(data.root)}`;
+document.querySelector('h1').textContent = document.title;
+
+const buttons = data.recordings.map(recording => {
+  const item = row.content.cloneNode(true);
+
+  item.querySelector('.title').textContent = titleOf(recording.slug);
+  item.querySelector('.stamp').textContent = recording.stamp;
+  item.querySelector('.command').textContent = decode(recording.command);
+  item.querySelector('.log').href = `${recording.slug}/${recording.stamp}.stdout.log`;
+
+  const gif = item.querySelector('.gif');
+  if (recording.gif) {
+    gif.href = `${recording.slug}/${recording.stamp}.gif`;
+  } else {
+    gif.remove();
+  }
+
+  const button = item.querySelector('button');
+  button.addEventListener('click', () => show(button, recording));
+  list.append(item);
+  return button;
+});
+
+let player = null;
+
+function show(button, recording) {
+  player?.dispose();
+  mount.replaceChildren();
+  buttons.forEach(other => other.setAttribute('aria-current', String(other === button)));
+  player = AsciinemaPlayer.create(
+    `data:text/plain;base64,${recording.cast}`, mount, { fit: 'width' }
+  );
+}
+
+if (data.recordings.length > 0) {
+  show(buttons[0], data.recordings[0]);
+}
+</script>
+
+</body>
+</html>
