@@ -1,12 +1,21 @@
+<div align="center">
+
 # Proofcast
 
-![Christine (1983)](assets/arnie.gif)
+_A bodycam for AI_
 
-## Proofcast is an AI bodycam that lets you record the terminal output that _it_ sees, uncovering all the gruesome details... ___what do you mean it was only staging!?___
+<img src="assets/arnie.gif" alt="Christine (1983)" width="640">
 
---- 
+</div>
 
-### Install
+Proofcast is an AI bodycam that lets you record the terminal output that _it_
+sees, uncovering all the gruesome details...
+
+> ___what do you mean it was only staging!?___
+
+---
+
+## Install
 
 ```bash
 npx skills@latest add killallgit/killall-proof \
@@ -16,10 +25,12 @@ npx skills@latest add killallgit/killall-proof \
   --yes
 ```
 
-There are some pre-reqs:
+**Pre-reqs**
 
-- `asciinema` 3.0+
-- `agg` — optional, only if you want a gif alongside each recording
+| | |
+|---|---|
+| `asciinema` 3.0+ | required |
+| `agg` | optional — adds a gif alongside each recording |
 
 ## How to use
 
@@ -42,7 +53,7 @@ Output that scrolls faster than the terminal can draw collapses into a single
 frame, so the footage shows the aftermath rather than the incident. The full
 text survives in the log, which nobody watches.
 
-Everything the agent printed is captured verbatim, including your secrets.
+Everything the agent printed is captured verbatim, **including your secrets**.
 Proofcast does not redact them. Add `.proofcast/` to `.gitignore`.
 
 Recordings are kept until someone deletes them, and someone always does.
