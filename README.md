@@ -1,8 +1,9 @@
-<div align="center">
 
 # Proofcast
 
 _A bodycam for AI_
+
+<div align="center">
 
 <img src="assets/arnie.gif" alt="Christine (1983)" width="640">
 
