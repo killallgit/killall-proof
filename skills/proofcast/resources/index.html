@@ -69,15 +69,18 @@ document.querySelector('h1').textContent = document.title;
 
 const buttons = data.recordings.map(recording => {
   const item = row.content.cloneNode(true);
+  const slug = decode(recording.slug);
+  const stamp = decode(recording.stamp);
+  const path = `${encodeURIComponent(slug)}/${encodeURIComponent(stamp)}`;
 
-  item.querySelector('.title').textContent = titleOf(recording.slug);
-  item.querySelector('.stamp').textContent = recording.stamp;
+  item.querySelector('.title').textContent = titleOf(slug);
+  item.querySelector('.stamp').textContent = stamp;
   item.querySelector('.command').textContent = decode(recording.command);
-  item.querySelector('.log').href = `${recording.slug}/${recording.stamp}.stdout.log`;
+  item.querySelector('.log').href = `${path}.stdout.log`;
 
   const gif = item.querySelector('.gif');
   if (recording.gif) {
-    gif.href = `${recording.slug}/${recording.stamp}.gif`;
+    gif.href = `${path}.gif`;
   } else {
     gif.remove();
   }

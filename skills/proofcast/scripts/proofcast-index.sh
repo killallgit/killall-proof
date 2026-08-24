@@ -17,7 +17,10 @@ root=$(cd -- "$root" && pwd -P)
 casts=()
 while IFS= read -r cast; do
   casts+=("$cast")
-done < <(find "$root" -mindepth 2 -maxdepth 2 -name '*.cast' | sort -r)
+# Sort on the timestamped filename, not the whole path: sorting paths orders by
+# slug first, which buries a recording made today under an older slug.
+done < <(find "$root" -mindepth 2 -maxdepth 2 -name '*.cast' \
+  | awk -F/ '{ print $NF "\t" $0 }' | sort -r | cut -f2-)
 
 (( ${#casts[@]} > 0 )) || die "no recordings found under $root"
 
@@ -42,7 +45,9 @@ emit_data() {
     command_line=${command_line#'$ '}
 
     printf '%s\n{"slug":"%s","stamp":"%s","command":"%s","cast":"%s","gif":%s}' \
-      "$separator" "$slug" "$stamp" \
+      "$separator" \
+      "$(printf '%s' "$slug" | encode)" \
+      "$(printf '%s' "$stamp" | encode)" \
       "$(printf '%s' "$command_line" | encode)" \
       "$(encode "$cast")" \
       "$([[ -f "$root/$slug/$stamp.gif" ]] && echo true || echo false)"
@@ -52,13 +57,20 @@ emit_data() {
   printf '\n]}'
 }
 
+# Build beside the index and move it into place, so a failure part way through
+# leaves the previous index intact rather than a truncated one.
 index="$root/index.html"
+draft=$(mktemp "$root/.index.XXXXXX")
+trap 'rm -f -- "$draft"' EXIT
+
 while IFS= read -r line; do
   if [[ $line == *'id="data"'* ]]; then
     printf '<script id="data" type="application/json">%s</script>\n' "$(emit_data)"
   else
     printf '%s\n' "$line"
   fi
-done <"$TEMPLATE" >"$index"
+done <"$TEMPLATE" >"$draft"
+
+mv -- "$draft" "$index"
 
 printf '%s\n' "$index"

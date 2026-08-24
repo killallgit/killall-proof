@@ -110,8 +110,14 @@ complete=1
 # agg pads on by default. Neither changes the file size, only the watching.
 if command -v agg >/dev/null 2>&1; then
   gif="$bundle/$timestamp.gif"
+  # The gif is a convenience. Losing it must not cost the caller the cast, the
+  # index, or the recorded command's own exit status.
   agg --quiet --font-size "$FONT_SIZE" --fps-cap "$FPS" \
-    --idle-time-limit "$IDLE_LIMIT" --last-frame-duration 0 "$cast" "$gif"
+    --idle-time-limit "$IDLE_LIMIT" --last-frame-duration 0 "$cast" "$gif" || {
+    printf 'proofcast: gif rendering failed, keeping the cast\n' >&2
+    rm -f -- "$gif"
+    gif=
+  }
 fi
 
 "${BASH_SOURCE[0]%/*}/proofcast-index.sh" "$root" >/dev/null
