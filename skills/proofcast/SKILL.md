@@ -50,8 +50,10 @@ replays the selected one with real text you can pause, scrub, and copy from.
 Rebuild it without recording by running
 `"${CLAUDE_SKILL_DIR}/scripts/proofcast-index.sh" <root>`. The page comes from
 `resources/index.html`, a plain HTML file that opens on its own with an empty
-list; the index script only swaps its `<script id="data">` element for the real
-recordings. Edit that file to change how the index looks.
+list; the index script swaps its `<script id="data">` element for the real
+recordings and inlines the player from `resources/vendor/`. Edit that file to
+change how the index looks. The generated page carries the player with it, so
+it replays with no network.
 
 A `.proofcast` directory inside a repository holds verbatim terminal output.
 Add it to `.gitignore` unless the recordings are meant to be committed.

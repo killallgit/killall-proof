@@ -2,6 +2,9 @@
 set -euo pipefail
 
 readonly TEMPLATE="${BASH_SOURCE[0]%/*}/../resources/index.html"
+readonly VENDOR="${BASH_SOURCE[0]%/*}/../resources/vendor"
+readonly PLAYER_CSS="$VENDOR/asciinema-player.css"
+readonly PLAYER_JS="$VENDOR/asciinema-player.min.js"
 
 die() {
   printf 'proofcast-index: %s\n' "$*" >&2
@@ -12,6 +15,8 @@ root=${1-}
 [[ -n $root ]] || die "usage: proofcast-index <root-dir>"
 [[ -d $root ]] || die "root directory does not exist: $root"
 [[ -f $TEMPLATE ]] || die "missing template: $TEMPLATE"
+[[ -f $PLAYER_CSS ]] || die "missing player stylesheet: $PLAYER_CSS"
+[[ -f $PLAYER_JS ]] || die "missing player script: $PLAYER_JS"
 root=$(cd -- "$root" && pwd -P)
 
 casts=()
@@ -63,12 +68,20 @@ index="$root/index.html"
 draft=$(mktemp "$root/.index.XXXXXX")
 trap 'rm -f -- "$draft"' EXIT
 
+# The template points at resources/vendor so it still opens on its own. The
+# generated page inlines the player instead: a recordings root is copied and
+# opened anywhere, and replay must not depend on a network.
 while IFS= read -r line; do
-  if [[ $line == *'id="data"'* ]]; then
-    printf '<script id="data" type="application/json">%s</script>\n' "$(emit_data)"
-  else
-    printf '%s\n' "$line"
-  fi
+  case $line in
+    *'id="data"'*)
+      printf '<script id="data" type="application/json">%s</script>\n' "$(emit_data)" ;;
+    *'vendor/asciinema-player.css'*)
+      printf '<style>\n'; cat -- "$PLAYER_CSS"; printf '</style>\n' ;;
+    *'vendor/asciinema-player.min.js'*)
+      printf '<script>\n'; cat -- "$PLAYER_JS"; printf '</script>\n' ;;
+    *)
+      printf '%s\n' "$line" ;;
+  esac
 done <"$TEMPLATE" >"$draft"
 
 mv -- "$draft" "$index"

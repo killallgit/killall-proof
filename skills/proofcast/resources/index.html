@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Proofcast</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.css">
+<link rel="stylesheet" href="vendor/asciinema-player.css">
 <style>
 :root { color-scheme: dark; }
 body { margin: 0 auto; padding: 2rem 1.5rem; max-width: 72rem;
@@ -48,7 +48,7 @@ a:hover { color: #d8dbe0; }
   </li>
 </template>
 
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js"></script>
+<script src="vendor/asciinema-player.min.js"></script>
 <script>
 const decode = text => new TextDecoder().decode(
   Uint8Array.from(atob(text), character => character.charCodeAt(0))
