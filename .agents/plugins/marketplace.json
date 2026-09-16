@@ -1,0 +1,20 @@
+{
+  "name": "killall-proof",
+  "interface": {
+    "displayName": "Killall Proof"
+  },
+  "plugins": [
+    {
+      "name": "proofcast",
+      "source": {
+        "source": "local",
+        "path": "./plugins/proofcast"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

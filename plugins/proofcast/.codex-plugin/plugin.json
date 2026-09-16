@@ -1,0 +1,21 @@
+{
+  "name": "proofcast",
+  "version": "1.0.0",
+  "description": "Record terminal output as a replayable proofcast",
+  "author": {
+    "name": "killallgit",
+    "url": "https://github.com/killallgit"
+  },
+  "homepage": "https://github.com/killallgit/killall-proof",
+  "repository": "https://github.com/killallgit/killall-proof",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Proofcast",
+    "shortDescription": "Replayable terminal recordings.",
+    "longDescription": "Capture terminal output as an asciicast with a local replay index and optional GIF.",
+    "developerName": "killallgit",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": "Record this command with proofcast."
+  }
+}

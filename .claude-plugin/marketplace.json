@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "killall-proof",
+  "description": "Proofcast terminal recording skill",
+  "owner": {
+    "name": "killallgit",
+    "url": "https://github.com/killallgit"
+  },
+  "plugins": [
+    {
+      "name": "proofcast",
+      "source": "./plugins/proofcast",
+      "description": "Record terminal output as a replayable proofcast",
+      "category": "development"
+    }
+  ]
+}

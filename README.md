@@ -16,7 +16,34 @@ sees, uncovering all the gruesome details...
 
 ---
 
-## Install
+## Install from a marketplace
+
+Claude Code:
+
+```bash
+claude plugin marketplace add killallgit/killall-proof
+claude plugin install proofcast@killall-proof
+```
+
+To share the Claude Code setup with one project, run from that project:
+
+```bash
+claude plugin marketplace add killallgit/killall-proof --scope project
+claude plugin install proofcast@killall-proof --scope project
+```
+
+Codex:
+
+```bash
+codex plugin marketplace add killallgit/killall-proof
+codex plugin add proofcast@killall-proof
+```
+
+For a local checkout, pass its path to `plugin marketplace add`, then install
+the plugin by its `proofcast@killall-proof` identifier. `claude plugin install`
+does not accept a repository path.
+
+## Install as an individual skill
 
 ```bash
 npx skills@latest add killallgit/killall-proof \
@@ -32,6 +59,9 @@ npx skills@latest add killallgit/killall-proof \
 |---|---|
 | `asciinema` 3.0+ | required |
 | `agg` | optional — adds a gif alongside each recording |
+
+After editing `skills/proofcast/`, run `python3 scripts/sync-plugin.py` and
+commit the updated `plugins/proofcast/` copy used by the marketplaces.
 
 ## How to use
 

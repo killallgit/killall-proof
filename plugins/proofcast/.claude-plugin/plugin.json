@@ -1,0 +1,9 @@
+{
+  "name": "proofcast",
+  "version": "1.0.0",
+  "description": "Record terminal output as a replayable proofcast",
+  "author": {
+    "name": "killallgit",
+    "url": "https://github.com/killallgit"
+  }
+}
