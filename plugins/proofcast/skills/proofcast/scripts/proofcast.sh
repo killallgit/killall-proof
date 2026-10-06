@@ -26,7 +26,9 @@ EOF
   exit 2
 }
 
-(( BASH_VERSINFO[0] >= 4 )) || die "requires bash 4 or newer, found ${BASH_VERSION}"
+# printf %(...)T, used for the timestamp below, arrived in bash 4.2.
+(( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2) )) ||
+  die "requires bash 4.2 or newer, found ${BASH_VERSION}"
 
 root=
 name=
@@ -57,7 +59,13 @@ root=$(cd -- "$root" && pwd -P)
 bundle="$root/$name"
 mkdir -p -- "$bundle"
 
-timestamp=$(date +%Y%m%d-%H%M%S)
+# Milliseconds keep back-to-back recordings under one slug from colliding.
+# EPOCHREALTIME needs bash 5, and GNU date covers bash 4. The separator follows
+# the locale, so a comma is as likely as a dot.
+now=${EPOCHREALTIME-$(date +%s.%N)}
+[[ $now =~ ^([0-9]+)[.,]([0-9]{3}) ]] ||
+  die "cannot read the clock to the millisecond; use bash 5 or GNU date"
+printf -v timestamp '%(%Y%m%d-%H%M%S)T-%s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 cast="$bundle/$timestamp.cast"
 log="$bundle/$timestamp.stdout.log"
 [[ ! -e $cast && ! -e $log ]] || die "recording already exists for $timestamp"

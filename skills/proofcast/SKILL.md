@@ -2,7 +2,7 @@
 name: proofcast
 description: Records terminal output as a replayable asciicast for review. Use when the user asks to record, capture, 'turn on the bodycam', or create proof of terminal output.
 license: CC0-1.0
-compatibility: Requires bash 4+ and asciinema 3.0+; agg is optional and adds a gif
+compatibility: Requires bash 4.2+ and asciinema 3.0+; agg is optional and adds a gif
 metadata:
   author: killallgit <@archae0pteryx>
 ---
@@ -22,17 +22,31 @@ terminology), of terminal (shell) output, follow these steps:
 2. Recordings default to `.proofcast` in the current directory, created if
    missing. Only ask the user for a location when they want them somewhere
    else, then pass it with `--root`.
-3. Pick the one command that demonstrates the behavior. For a multi-step flow,
-   put the steps in a temporary Bash script and record that instead.
+3. Choose the literal command that demonstrates the behavior: the real tool,
+   typed the way a person types it at a prompt. The recording shows that
+   command on its `$` line, and every line of output must come from it.
+   - For a multi-step flow, record each command as its own recording under the
+     same `<slug>`.
+   - When one command needs shell syntax such as a pipe, record
+     `bash -c '<pipeline>'` so the whole pipeline shows on the `$` line.
+   - A script the project already ships is a literal command. A script, alias,
+     or function written for the recording is a wrapper: it hides what ran and
+     can print anything, so the recording proves nothing.
+   - Never stage output with `echo`, `printf`, or `cat` of text you prepared.
+     When the literal command cannot run, tell the user instead of recording a
+     substitute.
 4. Confirm the command cannot print passwords, tokens, or API keys. Proofcast
    captures output verbatim and does not redact.
 5. Run this skill's bundled `scripts/proofcast.sh --name <slug> -- <command> [args...]`
    using the absolute path to the directory containing this `SKILL.md`. In Claude
    Code, that is `"${CLAUDE_SKILL_DIR}/scripts/proofcast.sh"`. Choose a short
    lowercase-hyphenated `<slug>` for what is being proven.
-6. Proofcast prints every file it wrote, index last. Report the index as a
-   clickable link and say exactly `I stopped the recording.` Report the exit
-   status if the command failed.
+6. Proofcast prints every file it wrote, index last. After the last recording,
+   report the recordings directory (the index's parent, `.proofcast` unless
+   `--root` changed it) as an absolute path and the index as a clickable link,
+   then say exactly `I stopped the recording.` Report the exit status of any
+   command that failed. Offer to open the index in the user's browser, and open
+   it only after the user agrees.
 
 ## Bundle layout
 
@@ -46,7 +60,8 @@ index covering every recording in the root:
 <root>/<slug>/<timestamp>.gif          # only when agg is installed
 ```
 
-Reuse the same `<slug>` to collect repeat runs of the same proof together.
+Reuse the same `<slug>` to collect repeat runs and the steps of one flow
+together.
 `index.html` opens straight from disk, lists every recording newest first, and
 replays the selected one with real text you can pause, scrub, and copy from.
 Rebuild it without recording by running
