@@ -83,8 +83,10 @@ opens it if you agree (or already asked it to).
 
 The proof must show the commands that actually run. Multi-step flows record
 each command separately under the same slug. If a script is needed, the agent
-inspects it and records it with execution tracing: `bash -x ./script.sh` for
-Bash, including existing project scripts. Child scripts need their own tracing.
+inspects it and adds execution tracing while preserving the original interpreter
+path and startup options, including shebang flags. For `#!/path/to/bash -e`, use
+`/path/to/bash -ex ./script.sh` so tracing keeps the original stop-on-failure behavior.
+This includes existing project scripts. Child scripts need their own tracing.
 A wrapper that only prints selected commands or success messages hides the
 work; its printed claims are not proof of execution.
 

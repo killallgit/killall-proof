@@ -33,9 +33,11 @@ terminal output. Record the commands that demonstrate the claim:
      `bash -xc '<pipeline>'` so Bash traces the commands it executes.
    - **A wrapper's name and printed claims are not evidence of its underlying
      commands.** Prefer running those commands directly. If a script is needed,
-     inspect it first and record Bash scripts with `bash -x ./script.sh [args...]`
-     (execution tracing, not `bash -v` source listing). This applies to existing
-     project scripts as well as scripts written for the recording.
+     inspect it first and add execution tracing while preserving its original
+     interpreter path and startup options, including flags in its shebang.
+     For `#!/path/to/bash -e`, record `/path/to/bash -ex ./script.sh [args...]`:
+     `-x` adds tracing and `-e` still stops on failure. `bash -v` only lists source.
+     This applies to existing project scripts and scripts written for the recording.
    - Keep tracing enabled and its stderr visible throughout the proof. Trace
      nested scripts too: `bash -x` does not trace a child interpreter. For other
      interpreters, use execution tracing or record the underlying commands one
