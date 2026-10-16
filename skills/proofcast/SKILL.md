@@ -1,6 +1,6 @@
 ---
 name: proofcast
-description: Records terminal output as a replayable asciicast for review. Use when the user asks to record, capture, 'turn on the bodycam', or create proof of terminal output.
+description: Use when the user says 'prove it' about code or command behavior, asks to record or capture terminal output, or says 'turn on the bodycam'. Records the actual commands and output as a replayable asciicast.
 license: CC0-1.0
 compatibility: Requires bash 4.2+ and asciinema 3.0+; agg is optional and adds a gif
 metadata:
@@ -9,8 +9,10 @@ metadata:
 
 # Instructions
 
-When asked to provide "proof", a "recording", "capture", "video" (or related
-terminology), of terminal (shell) output, follow these steps:
+Treat "prove it" about code or command behavior as a request to record terminal
+evidence with this skill, even when the user does not mention recording.
+Also use it for requests for "proof", a "recording", "capture", or "video" of
+terminal output. Record the commands that demonstrate the claim:
 
 ## Prerequisites
 
@@ -24,19 +26,27 @@ terminology), of terminal (shell) output, follow these steps:
    else, then pass it with `--root`.
 3. Choose the literal command that demonstrates the behavior: the real tool,
    typed the way a person types it at a prompt. The recording shows that
-   command on its `$` line, and every line of output must come from it.
+   command on its `$` line and captures its actual output.
    - For a multi-step flow, record each command as its own recording under the
      same `<slug>`.
    - When one command needs shell syntax such as a pipe, record
-     `bash -c '<pipeline>'` so the whole pipeline shows on the `$` line.
-   - A script the project already ships is a literal command. A script, alias,
-     or function written for the recording is a wrapper: it hides what ran and
-     can print anything, so the recording proves nothing.
+     `bash -xc '<pipeline>'` so Bash traces the commands it executes.
+   - **A wrapper's name and printed claims are not evidence of its underlying
+     commands.** Prefer running those commands directly. If a script is needed,
+     inspect it first and record Bash scripts with `bash -x ./script.sh [args...]`
+     (execution tracing, not `bash -v` source listing). This applies to existing
+     project scripts as well as scripts written for the recording.
+   - Keep tracing enabled and its stderr visible throughout the proof. Trace
+     nested scripts too: `bash -x` does not trace a child interpreter. For other
+     interpreters, use execution tracing or record the underlying commands one
+     by one. A wrapper's `echo` output cannot replace execution traces.
    - Never stage output with `echo`, `printf`, or `cat` of text you prepared.
-     When the literal command cannot run, tell the user instead of recording a
-     substitute.
-4. Confirm the command cannot print passwords, tokens, or API keys. Proofcast
-   captures output verbatim and does not redact.
+     When the real commands cannot run or cannot be made visible, tell the user
+     the limitation instead of recording a substitute.
+4. Confirm the command and its trace cannot print passwords, tokens, or API keys.
+   Tracing exposes expanded arguments and assignments, even when normal output
+   hides them. Use safe inputs or choose another demonstration; keep tracing on.
+   Proofcast captures output verbatim and does not redact.
 5. Run this skill's bundled `scripts/proofcast.sh --name <slug> -- <command> [args...]`
    using the absolute path to the directory containing this `SKILL.md`. In Claude
    Code, that is `"${CLAUDE_SKILL_DIR}/scripts/proofcast.sh"`. Choose a short
@@ -45,8 +55,13 @@ terminology), of terminal (shell) output, follow these steps:
    report the recordings directory (the index's parent, `.proofcast` unless
    `--root` changed it) as an absolute path and the index as a clickable link,
    then say exactly `I stopped the recording.` Report the exit status of any
-   command that failed. Offer to open the index in the user's browser, and open
-   it only after the user agrees.
+   command that failed.
+7. Unless the user already asked to open the page, ask explicitly:
+   **"Would you like me to open the recording webpage in your browser?"**
+   After agreement (or if already requested), open the generated `index.html`
+   using its absolute path with an available browser tool or the platform's
+   opener (`open` on macOS, `xdg-open` on Linux). If opening is unavailable,
+   explain that and leave the clickable link so the user can open it themselves.
 
 ## Bundle layout
 
