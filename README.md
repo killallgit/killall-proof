@@ -65,8 +65,9 @@ commit the updated `plugins/proofcast/` copy used by the marketplaces.
 
 ## How to use
 
-Ask Claude Code to record something. Recordings land in `.proofcast` next to
-wherever it ran:
+Tell your agent **"prove it"** about code or command behavior to trigger
+Proofcast. You can also ask to record terminal output or "turn on the bodycam".
+Recordings land in `.proofcast` next to wherever it ran:
 
 ```
 .proofcast/index.html
@@ -76,7 +77,18 @@ wherever it ran:
 ```
 
 Open `index.html` from disk. It lists every recording and replays them as real
-text you can pause, scrub, and copy from.
+text you can pause, scrub, and copy from. After recording, the agent asks
+**"Would you like me to open the recording webpage in your browser?"** and
+opens it if you agree (or already asked it to).
+
+The proof must show the commands that actually run. Multi-step flows record
+each command separately under the same slug. If a script is needed, the agent
+inspects it and adds execution tracing while preserving the original interpreter
+path and startup options, including shebang flags. For `#!/path/to/bash -e`, use
+`/path/to/bash -ex ./script.sh` so tracing keeps the original stop-on-failure behavior.
+This includes existing project scripts. Child scripts need their own tracing.
+A wrapper that only prints selected commands or success messages hides the
+work; its printed claims are not proof of execution.
 
 ## Accountability, as ever, has limits
 
@@ -85,6 +97,7 @@ frame, so the footage shows the aftermath rather than the incident. The full
 text survives in the log, which nobody watches.
 
 Everything the agent printed is captured verbatim, **including your secrets**.
-Proofcast does not redact them. Add `.proofcast/` to `.gitignore`.
+Execution traces also expose expanded arguments and assignments. Proofcast
+does not redact them. Add `.proofcast/` to `.gitignore`.
 
 Recordings are kept until someone deletes them, and someone always does.
