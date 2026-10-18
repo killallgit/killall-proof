@@ -149,6 +149,16 @@ const encode = text => Buffer.from(text).toString('base64');
     const download = await downloadEvent;
     const exported = path.join(temporary, 'exported.html');
     await download.saveAs(exported);
+    await page.evaluate(() => {
+      for (const id of ['error', 'cleanup-error']) {
+        const element = document.getElementById(id);
+        element.textContent = 'An error from another recording';
+        element.hidden = false;
+      }
+    });
+    const secondDownloadEvent = page.waitForEvent('download');
+    await page.locator('#export').click();
+    await (await secondDownloadEvent).saveAs(exported);
     await page.goto(pathToFileURL(exported).href);
     await page.waitForFunction(() => !document.getElementById('toggle').disabled);
     assert.equal(await page.locator('.recording').count(), 1);
@@ -156,6 +166,10 @@ const encode = text => Buffer.from(text).toString('base64');
     assert.equal(await page.locator('#gif').count(), 0);
     assert.equal(await page.evaluate(() => JSON.parse(document.getElementById('data').textContent).rootPath), '');
     assert.match(await page.locator('#log').getAttribute('href'), /^data:text\/plain;base64,/);
+    for (const id of ['notice', 'error', 'cleanup-error']) {
+      assert.equal(await page.locator(`#${id}`).getAttribute('hidden'), '', 'saved page hides cleared messages');
+      assert.equal(await page.locator(`#${id}`).textContent(), '', 'saved page clears unrelated messages');
+    }
 
     // Fake folder handles exercise deletion boundaries without touching real files.
     await page.addInitScript(({ html }) => {

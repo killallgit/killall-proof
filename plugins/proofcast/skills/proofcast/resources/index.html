@@ -327,6 +327,7 @@ $('export').addEventListener('click', () => act(() => {
   copy.querySelector('#player').replaceChildren();
   copy.querySelector('#cleanup').removeAttribute('open');
   for (const id of ['notice', 'error', 'cleanup-error', 'cleanup-command']) copy.querySelector(`#${id}`).textContent = '';
+  for (const id of ['notice', 'error', 'cleanup-error']) copy.querySelector(`#${id}`).hidden = true;
   const blob = new Blob(['<!doctype html>\n', copy.outerHTML], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
