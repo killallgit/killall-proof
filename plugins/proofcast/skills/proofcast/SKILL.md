@@ -49,16 +49,32 @@ terminal output. Record the commands that demonstrate the claim:
    Tracing exposes expanded arguments and assignments, even when normal output
    hides them. Use safe inputs or choose another demonstration; keep tracing on.
    Proofcast captures output verbatim and does not redact.
-5. Run this skill's bundled `scripts/proofcast.sh --name <slug> -- <command> [args...]`
+5. Supply structured context for each recording:
+   - **Assertion:** the specific behavior being checked, in one short sentence.
+   - **Justification:** one short sentence connecting the real command to that
+     behavior: "Run XYZ to show that a node scales up and inference runs."
+   Keep these high-level: one or two sentences total, not a procedure or report.
+   State the intended check, not an unobserved success. The exact, shell-quoted
+   invocation is captured automatically; pass the real command after `--`.
+   These descriptions explain the evidence; the output is what supports the claim.
+6. Run this skill's bundled
+   `scripts/proofcast.sh --name <slug> --assertion '<claim>' --justification '<reason>' -- <command> [args...]`
    using the absolute path to the directory containing this `SKILL.md`. In Claude
    Code, that is `"${CLAUDE_SKILL_DIR}/scripts/proofcast.sh"`. Choose a short
    lowercase-hyphenated `<slug>` for what is being proven.
-6. Proofcast prints every file it wrote, index last. After the last recording,
+7. Inspect the actual output before claiming the assertion was demonstrated.
+   A zero exit status alone does not prove the assertion. If the command fails,
+   the evidence is partial, or the result contradicts the claim, report that
+   limitation plainly; keep the recording and its original context.
+   Check every part of a compound assertion against observed evidence,
+   including any claimed initial state; inferred prerequisites are not proof.
+   Proofcast prints every file it wrote, index last. After the last recording,
    report the recordings directory (the index's parent, `.proofcast` unless
    `--root` changed it) as an absolute path and the index as a clickable link,
    then say exactly `I stopped the recording.` Report the exit status of any
    command that failed.
-7. Unless the user already asked to open the page, ask explicitly:
+8. Finish the brief handoff with the browser-opening decision. Unless the user
+   already asked to open the page, include this explicit question:
    **"Would you like me to open the recording webpage in your browser?"**
    After agreement (or if already requested), open the generated `index.html`
    using its absolute path with an available browser tool or the platform's
@@ -74,11 +90,14 @@ index covering every recording in the root:
 <root>/index.html          # <root> is .proofcast unless --root says otherwise
 <root>/<slug>/<timestamp>.cast
 <root>/<slug>/<timestamp>.stdout.log
+<root>/<slug>/<timestamp>.meta.json    # encoded context, invocation, exit status
 <root>/<slug>/<timestamp>.gif          # only when agg is installed
 ```
 
 Reuse the same `<slug>` to collect repeat runs and the steps of one flow
 together.
+Pass context for every step; explain what that command checks rather than
+claiming that each step proves the entire flow.
 `index.html` opens straight from disk, lists every recording newest first, and
 replays the selected one with real text you can pause, scrub, and copy from.
 Rebuild it without recording by running
@@ -95,3 +114,22 @@ Add it to `.gitignore` unless the recordings are meant to be committed.
 
 Share the index for review. Share the gif where a player cannot go, such as a
 pull request comment or a chat message.
+
+## Disposable by default
+
+Keep the handoff brief. Recordings are temporary review material, not an archive;
+leave them in place until the user chooses to remove them. The page offers
+**Save** to download the selected recording, context, and text log as
+one offline HTML file. The browser chooses the download location; GIF remains
+a separate optional file. Rewind and speed controls operate the terminal
+recording, not the GIF.
+When export must precede cleanup, confirm the exported file was saved before
+deleting the original; starting a download is not confirmation.
+
+**Nuke proof** asks for confirmation and folder access in supported browsers.
+It removes only files listed by this index, not unrelated files, source code,
+exported copies, or infrastructure created by the recorded command. Browsers
+without folder access show exact cleanup commands for the agent or human to run.
+Treat those as instructions, not completed deletion. If asked to clean up,
+inspect the resolved paths and remove only the confirmed recording files; stop
+if the folder or index changed. Report partial failures explicitly.

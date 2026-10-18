@@ -14,13 +14,16 @@ die() {
 
 usage() {
   cat >&2 <<'EOF'
-usage: proofcast [--root <dir>] --name <slug> -- <command> [args...]
+usage: proofcast [--root <dir>] --name <slug> \
+  --assertion <claim> --justification <reason> -- <command> [args...]
 
   --root  existing directory that holds recordings.
           Defaults to .proofcast in the current directory, created if missing.
   --name  slug for this recording; lowercase, digits, hyphens
+  --assertion      one sentence stating the behavior being checked
+  --justification  one sentence explaining how the command checks that behavior
 
-Writes <root>/<slug>/<timestamp>.cast and <timestamp>.stdout.log,
+Writes <root>/<slug>/<timestamp>.cast, .stdout.log, and .meta.json,
 then rebuilds <root>/index.html.
 EOF
   exit 2
@@ -32,10 +35,14 @@ EOF
 
 root=
 name=
+assertion=
+justification=
 while (( $# > 0 )); do
   case $1 in
     --root) [[ -n ${2-} ]] || usage; root=$2; shift 2 ;;
     --name) [[ -n ${2-} ]] || usage; name=$2; shift 2 ;;
+    --assertion) [[ -n ${2-} ]] || usage; assertion=$2; shift 2 ;;
+    --justification) [[ -n ${2-} ]] || usage; justification=$2; shift 2 ;;
     --) shift; break ;;
     *) usage ;;
   esac
@@ -43,6 +50,7 @@ done
 
 (( $# > 0 )) || usage
 [[ -n $name ]] || usage
+[[ $assertion =~ [^[:space:]] && $justification =~ [^[:space:]] ]] || usage
 [[ $name =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || die "name must be lowercase alphanumeric with hyphens: $name"
 
 command -v asciinema >/dev/null 2>&1 || die "missing required binary: asciinema"
@@ -68,7 +76,8 @@ now=${EPOCHREALTIME-$(date +%s.%N)}
 printf -v timestamp '%(%Y%m%d-%H%M%S)T-%s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 cast="$bundle/$timestamp.cast"
 log="$bundle/$timestamp.stdout.log"
-[[ ! -e $cast && ! -e $log ]] || die "recording already exists for $timestamp"
+meta="$bundle/$timestamp.meta.json"
+[[ ! -e $cast && ! -e $log && ! -e $meta ]] || die "recording already exists for $timestamp"
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/proofcast.XXXXXX")
 runner="$work/run.sh"
@@ -86,9 +95,10 @@ cleanup() {
 trap cleanup EXIT
 
 printf -v command_literal '%q ' "$@"
+command_literal=${command_literal% }
 {
   echo '#!/usr/bin/env bash'
-  printf 'printf "$ %%s\\n" %q\n' "$*"
+  printf 'printf "$ %%s\\n" %q\n' "$command_literal"
   printf '%s\n' "$command_literal"
   printf 'printf %%s "$?" >%q\n' "$status_file"
 } >"$runner"
@@ -110,6 +120,12 @@ command_status=$(<"$status_file")
 # everywhere, and the recording has to play from a file:// index with no server.
 asciinema convert --quiet --overwrite -f asciicast-v2 "$raw" "$cast"
 asciinema convert --quiet --overwrite -f txt "$raw" "$log"
+encode_text() {
+  printf '%s' "$1" | base64 | tr -d '\n'
+}
+printf '{"assertion":"%s","justification":"%s","command":"%s","exitStatus":%s}\n' \
+  "$(encode_text "$assertion")" "$(encode_text "$justification")" \
+  "$(encode_text "$command_literal")" "$command_status" >"$meta"
 complete=1
 
 # Optional: a gif needs no player and no network, for pasting into a PR or chat.
@@ -130,7 +146,7 @@ fi
 
 "${BASH_SOURCE[0]%/*}/proofcast-index.sh" "$root" >/dev/null
 
-printf '%s\n%s\n' "$cast" "$log"
+printf '%s\n%s\n%s\n' "$cast" "$log" "$meta"
 [[ -n ${gif-} ]] && printf '%s\n' "$gif"
 printf '%s\n' "$root/index.html"
 exit "$command_status"
