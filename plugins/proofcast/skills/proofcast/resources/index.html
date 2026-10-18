@@ -2,110 +2,414 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Proofcast</title>
 <link rel="stylesheet" href="vendor/asciinema-player.css">
 <style>
-:root { color-scheme: dark; }
-body { margin: 0 auto; padding: 2rem 1.5rem; max-width: 72rem;
-       font: 14px/1.5 system-ui, sans-serif; background: #14161a; color: #d8dbe0; }
-h1 { margin: 0 0 1.5rem; font-size: 1.1rem; letter-spacing: .08em;
-     text-transform: uppercase; color: #7a828e; }
-#player { margin-bottom: 2rem; }
-ul { margin: 0; padding: 0; list-style: none; }
-li { display: flex; align-items: baseline; gap: 1rem;
-     border-top: 1px solid #262a31; padding: .6rem 0; }
-button { flex: 1; display: flex; align-items: baseline; gap: 1rem; text-align: left;
-         background: none; border: 0; color: inherit; font: inherit;
-         cursor: pointer; padding: 0; }
-button:hover .title, button[aria-current="true"] .title { color: #6cc7a8; }
-.title { min-width: 14rem; font-weight: 600; }
-.stamp { min-width: 11rem; color: #7a828e; font-variant-numeric: tabular-nums; }
-.command { flex: 1; color: #7a828e;
-           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-a { color: #7a828e; text-decoration: none; border-bottom: 1px solid #363b44; }
-a:hover { color: #d8dbe0; }
+:root { color-scheme: dark; --bg: #14161a; --surface: #1c2026; --line: #363b44;
+        --text: #d8dbe0; --muted: #a2aab6; --accent: #6cc7a8; }
+* { box-sizing: border-box; min-width: 0; }
+[hidden] { display: none !important; }
+body { margin: 0 auto; padding: 2rem 1.5rem; max-width: 74rem;
+       font: 14px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+button, a, summary, input { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; }
+button:disabled { cursor: default; opacity: .5; }
+header, .heading, .actions, .controls, .timeline, .history-heading {
+  display: flex; align-items: center; gap: 1rem; }
+header, .heading, .history-heading { justify-content: space-between; }
+header { margin-bottom: 2rem; }
+header strong { font-size: 1.2rem; letter-spacing: -.04em; }
+.muted, .stamp, .command-preview { color: var(--muted); }
+#root { overflow-wrap: anywhere; text-align: right; }
+h1 { margin: 0 0 .5rem; font-size: clamp(1.5rem, 4vw, 2.25rem); line-height: 1.2; letter-spacing: -.035em; }
+h2 { margin: 0; font-size: 1rem; }
+p { margin: 0; }
+.heading { align-items: start; }
+.actions { flex-wrap: wrap; gap: .5rem; flex-shrink: 0; }
+.action, .controls button { min-height: 44px; padding: .5rem .8rem; border: 1px solid var(--line);
+  border-radius: 5px; background: var(--surface); }
+.danger { color: #f1aaa6; }
+.context { margin: 1.5rem 0 1rem; display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: .5rem 1rem; }
+dt { color: var(--muted); }
+dd { margin: 0; max-width: 80ch; overflow-wrap: anywhere; }
+.command { padding: 1rem; background: var(--surface); border-left: 3px solid var(--accent); margin-bottom: 1rem; }
+.command span { display: block; color: var(--muted); margin-bottom: .35rem; font-size: .8rem; }
+code, pre { font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; white-space: pre-wrap; }
+#playback { background: #101216; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+#player { min-height: 5rem; }
+.controls { flex-wrap: wrap; padding: .75rem 1rem; border-top: 1px solid var(--line); gap: .5rem; }
+.timeline { flex-basis: 100%; gap: .75rem; font-variant-numeric: tabular-nums; font-size: .8rem; color: var(--muted); }
+.timeline input { flex: 1; min-height: 32px; accent-color: var(--accent); }
+.button-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 1rem minmax(0, 1fr); align-items: center; width: 100%; }
+.controls .button-group button { min-width: 44px; border-radius: 0; padding-inline: .35rem; }
+.controls #back { border-radius: 5px 0 0 5px; }
+.controls #toggle { border-left: 0; border-right: 0; }
+.controls #forward { border-radius: 0 5px 5px 0; }
+.controls #speed { grid-column: 5; border-radius: 5px; font-variant-numeric: tabular-nums; }
+.links { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin: .75rem 0 2rem; }
+.links a { display: inline-flex; align-items: center; min-height: 44px; }
+.auto-next { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px;
+  margin-left: auto; cursor: pointer; color: var(--muted); }
+.auto-next input { margin: 0; accent-color: var(--accent); }
+a { color: var(--muted); text-underline-offset: .25rem; }
+a:hover { color: var(--text); }
+.history-heading { margin-bottom: .75rem; }
+ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.recording { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(0, 1.5fr) auto; align-items: baseline;
+  gap: 1rem; width: 100%; border: 0; border-bottom: 1px solid var(--line); padding: 1rem;
+  text-align: left; background: none; }
+.recording:hover, .recording[aria-current="true"] { background: var(--surface); }
+.recording[aria-current="true"] { box-shadow: inset 3px 0 var(--accent); }
+.recording[aria-current="true"] .title { color: var(--accent); }
+.title { font-weight: 600; overflow-wrap: anywhere; }
+.stamp { font-size: .8rem; font-variant-numeric: tabular-nums; }
+.command-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice { padding: .8rem 1rem; margin-bottom: 1rem; background: var(--surface); border-left: 3px solid var(--accent); overflow-wrap: anywhere; }
+#error { border-color: #f1aaa6; }
+dialog { width: min(38rem, calc(100% - 2rem)); max-height: 85vh; padding: 1.5rem;
+  border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--bg); }
+dialog::backdrop { background: #0009; }
+dialog p { margin: 1rem 0; }
+dialog pre { padding: .75rem; background: var(--surface); max-height: 14rem; overflow: auto; }
+dialog .actions { justify-content: flex-end; }
+@media (max-width: 700px) {
+  body { padding: 1.25rem 1rem; }
+  .heading { flex-direction: column; }
+  .actions { flex-shrink: 1; }
+  .context { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  dd + dt { margin-top: .5rem; }
+  .recording { grid-template-columns: minmax(0, 1fr) auto; gap: .3rem .75rem; padding: .85rem; }
+  .command-preview { grid-column: 1 / -1; grid-row: 2; }
+  .stamp { font-size: .75rem; }
+  .controls { padding: .6rem; }
+}
 </style>
 </head>
 <body>
+<header><strong>Proofcast</strong><span id="root" class="muted"></span></header>
+<p id="error" class="notice" role="alert" hidden></p>
+<p id="notice" class="notice" role="status" hidden></p>
+<p id="empty" class="muted">No recordings yet. Record a command to add proof here.</p>
+<main id="capture" hidden>
+  <div class="heading">
+    <div><h1 id="title"></h1><p id="stamp" class="muted"></p></div>
+    <div class="actions">
+      <button id="export" class="action" type="button">Save</button>
+      <button id="nuke" class="action danger" type="button">Nuke proof</button>
+    </div>
+  </div>
+  <dl class="context">
+    <dt>Assertion</dt><dd id="assertion"></dd>
+    <dt>Justification</dt><dd id="justification"></dd>
+    <dt>Exit status</dt><dd id="exit-status"></dd>
+  </dl>
+  <div class="command"><span>Recorded command</span><code id="command"></code></div>
+  <section id="playback" aria-label="Terminal recording">
+    <div id="player"></div>
+    <div class="controls">
+      <div class="timeline">
+        <span id="elapsed">0:00</span>
+        <input id="position" type="range" min="0" max="0" step="0.1" value="0" aria-label="Recording position" disabled>
+        <span id="duration">0:00</span>
+      </div>
+      <div class="button-group" role="group" aria-label="Playback controls">
+        <button id="back" type="button" aria-label="Back 5 seconds" disabled>Back 5</button>
+        <button id="toggle" type="button" disabled>Play</button>
+        <button id="forward" type="button" aria-label="Forward 5 seconds" disabled>Fwd 5</button>
+        <button id="speed" type="button" aria-label="Playback speed 1x; tap to change to 1.5x" disabled>1x</button>
+      </div>
+    </div>
+  </section>
+  <div class="links">
+    <a id="log" download>Text log</a>
+    <label class="auto-next"><input id="auto-next" type="checkbox" checked>Auto-play next</label>
+  </div>
+  <section aria-labelledby="history-title">
+    <div class="history-heading"><h2 id="history-title">Recordings</h2><span id="count" class="muted"></span></div>
+    <ul id="recordings"></ul>
+  </section>
+</main>
+<dialog id="cleanup">
+  <h2>Delete these proof files?</h2>
+  <p id="cleanup-summary"></p>
+  <p>Export anything you want to keep first and check it was saved. This removes the listed captures and this index, not unrelated files, exports, or anything the recorded commands created.</p>
+  <div id="fallback" hidden>
+    <p>This browser cannot delete local files. Run these exact commands through your agent or terminal after confirming the paths. Nothing has been deleted.</p>
+    <pre><code id="cleanup-command"></code></pre>
+  </div>
+  <p id="cleanup-error" role="alert" hidden></p>
+  <div class="actions">
+    <button id="cancel-cleanup" class="action" type="button">Cancel</button>
+    <button id="delete-files" class="action danger" type="button">Choose proof folder</button>
+  </div>
+</dialog>
 
-<h1>Proofcast</h1>
-<div id="player"></div>
-<ul id="recordings"></ul>
-
-<!-- proofcast-index.sh replaces this element wholesale. Text is base64 so no
-     recorded terminal output can break out of the page. -->
-<script id="data" type="application/json">{"root":"","recordings":[]}</script>
-
+<!-- The index script replaces this element; all recorded text is base64. -->
+<script id="data" type="application/json">{"root":"","rootPath":"","recordings":[]}</script>
 <template id="row">
-  <li>
-    <button type="button">
-      <span class="title"></span>
-      <span class="stamp"></span>
-      <code class="command"></code>
-    </button>
-    <a class="log">stdout log</a>
-    <a class="gif">gif</a>
-  </li>
+  <li><button class="recording" type="button">
+    <span class="title"></span><code class="command-preview"></code><span class="stamp"></span>
+  </button></li>
 </template>
-
 <script src="vendor/asciinema-player.min.js"></script>
 <script>
+const $ = id => document.getElementById(id);
 const decode = text => new TextDecoder().decode(
   Uint8Array.from(atob(text), character => character.charCodeAt(0))
 );
-
+const data = JSON.parse($('data').textContent);
+const snapshot = JSON.stringify(data);
+const rootName = decode(data.root);
+const rootPath = decode(data.rootPath || '');
 const titleOf = slug => {
   const words = slug.replace(/-/g, ' ');
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
-
-const data = JSON.parse(document.getElementById('data').textContent);
-const list = document.getElementById('recordings');
-const mount = document.getElementById('player');
-const row = document.getElementById('row');
-
-document.title = `Proofcast — ${decode(data.root)}`;
-document.querySelector('h1').textContent = document.title;
-
-const buttons = data.recordings.map(recording => {
-  const item = row.content.cloneNode(true);
-  const slug = decode(recording.slug);
-  const stamp = decode(recording.stamp);
-  const path = `${encodeURIComponent(slug)}/${encodeURIComponent(stamp)}`;
-
-  item.querySelector('.title').textContent = titleOf(slug);
-  item.querySelector('.stamp').textContent = stamp;
-  item.querySelector('.command').textContent = decode(recording.command);
-  item.querySelector('.log').href = `${path}.stdout.log`;
-
-  const gif = item.querySelector('.gif');
-  if (recording.gif) {
-    gif.href = `${path}.gif`;
-  } else {
-    gif.remove();
+const stampOf = stamp => {
+  const match = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(\d{3})$/.exec(stamp);
+  return match ? `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}:${match[6]} (recording local time)` : stamp;
+};
+const message = (id, text) => {
+  $(id).textContent = text;
+  $(id).hidden = !text;
+};
+const report = error => message('error', error.message || String(error));
+const entries = data.recordings.map(recording => {
+  let metadata = null;
+  if (recording.meta) {
+    try {
+      const parsed = JSON.parse(decode(recording.meta));
+      if (!parsed || !['assertion', 'justification', 'command'].every(key => typeof parsed[key] === 'string') ||
+          !Number.isInteger(parsed.exitStatus) || parsed.exitStatus < 0 || parsed.exitStatus > 255) {
+        throw new Error('invalid metadata fields');
+      }
+      for (const key of ['assertion', 'justification', 'command']) decode(parsed[key]);
+      metadata = parsed;
+    }
+    catch (error) { report(new Error(`Cannot read recording context: ${error.message}`)); }
   }
-
-  const button = item.querySelector('button');
-  button.addEventListener('click', () => show(button, recording));
-  list.append(item);
-  return button;
+  return { recording, metadata, slug: decode(recording.slug), stamp: decode(recording.stamp) };
 });
+document.title = rootName ? `Proofcast - ${rootName}` : 'Proofcast';
+$('root').textContent = data.exported ? 'Exported capture' : rootName;
+$('count').textContent = `${entries.length} / newest first`;
+$('empty').hidden = entries.length > 0;
+$('capture').hidden = entries.length === 0;
+$('nuke').hidden = Boolean(data.exported);
 
 let player = null;
-
-function show(button, recording) {
+let selected = null;
+let playing = false;
+let speed = 1;
+let generation = 0;
+const speeds = [0.5, 1, 1.5, 2];
+const playbackButtons = [$('back'), $('toggle'), $('forward'), $('speed')];
+const buttons = entries.map(entry => {
+  const item = $('row').content.cloneNode(true);
+  item.querySelector('.title').textContent = titleOf(entry.slug);
+  item.querySelector('.stamp').textContent = stampOf(entry.stamp).replace(' (recording local time)', '');
+  item.querySelector('.command-preview').textContent = decode(entry.metadata?.command || entry.recording.command);
+  const button = item.querySelector('button');
+  button.addEventListener('click', () => show(entry));
+  $('recordings').append(item);
+  return button;
+});
+function timeLabel(seconds) {
+  const time = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(time / 60)}:${String(time % 60).padStart(2, '0')}`;
+}
+function syncPosition() {
+  if (!player) return;
+  const current = player.getCurrentTime();
+  const duration = player.getDuration();
+  if (!Number.isFinite(current) || !Number.isFinite(duration)) return;
+  $('elapsed').textContent = timeLabel(current);
+  $('duration').textContent = timeLabel(duration);
+  $('position').max = duration;
+  $('position').value = current;
+  $('position').setAttribute('aria-valuetext', `${timeLabel(current)} of ${timeLabel(duration)}`);
+}
+async function act(operation) {
+  try { await operation(); }
+  catch (error) { report(error); }
+}
+function createPlayer(position = 0, resume = false) {
+  const currentGeneration = ++generation;
   player?.dispose();
-  mount.replaceChildren();
-  buttons.forEach(other => other.setAttribute('aria-current', String(other === button)));
-  player = AsciinemaPlayer.create(
-    `data:text/plain;base64,${recording.cast}`, mount, { fit: 'width' }
-  );
+  $('player').replaceChildren();
+  playing = false;
+  $('toggle').textContent = 'Play';
+  playbackButtons.forEach(button => { button.disabled = true; });
+  $('position').disabled = true;
+  const nextSpeed = speeds[(speeds.indexOf(speed) + 1) % speeds.length];
+  $('speed').textContent = `${speed}x`;
+  $('speed').setAttribute('aria-label', `Playback speed ${speed}x; tap to change to ${nextSpeed}x`);
+  // This bundled player sets speed at creation, so restore position after rebuilding.
+  const instance = AsciinemaPlayer.create(`data:text/plain;base64,${selected.recording.cast}`, $('player'), {
+    fit: 'width', controls: false, speed, preload: true, autoPlay: false
+  });
+  player = instance;
+  instance.addEventListener('ready', () => act(async () => {
+    if (currentGeneration !== generation) return;
+    await instance.seek(position);
+    if (currentGeneration !== generation) return;
+    playbackButtons.forEach(button => { button.disabled = false; });
+    $('position').disabled = false;
+    syncPosition();
+    if (resume) await instance.play();
+  }));
+  instance.addEventListener('playing', () => {
+    if (currentGeneration !== generation) return;
+    playing = true;
+    $('toggle').textContent = 'Pause';
+  });
+  instance.addEventListener('pause', () => {
+    if (currentGeneration !== generation) return;
+    playing = false;
+    $('toggle').textContent = 'Play';
+    syncPosition();
+  });
+  instance.addEventListener('ended', () => {
+    if (currentGeneration !== generation) return;
+    const advance = playing && $('auto-next').checked;
+    playing = false;
+    $('toggle').textContent = 'Play';
+    syncPosition();
+    const next = entries[entries.indexOf(selected) + 1];
+    if (advance && next) show(next, true);
+  });
+  instance.addEventListener('error', event => {
+    if (currentGeneration !== generation) return;
+    report(new Error(`Playback failed: ${event.message || 'cannot load recording'}. Open the text log to inspect the output.`));
+  });
 }
-
-if (data.recordings.length > 0) {
-  show(buttons[0], data.recordings[0]);
+function show(entry, resume = false) {
+  selected = entry;
+  const { recording, metadata, slug, stamp } = entry;
+  $('title').textContent = titleOf(slug);
+  $('stamp').textContent = stampOf(stamp);
+  const missingContext = recording.meta ? 'Context is unreadable; see the error above.' : 'Not supplied with this older recording.';
+  $('assertion').textContent = metadata ? decode(metadata.assertion) : missingContext;
+  $('justification').textContent = metadata ? decode(metadata.justification) : missingContext;
+  $('exit-status').textContent = metadata
+    ? `${metadata.exitStatus}${metadata.exitStatus === 0 ? ' (command completed; not an assertion verdict)' : ' (command failed)'}`
+    : 'Not recorded.';
+  $('command').textContent = decode(metadata?.command || recording.command);
+  $('log').hidden = !recording.log;
+  $('log').href = `data:text/plain;base64,${recording.log || ''}`;
+  $('log').download = `${slug}-${stamp}.stdout.log`;
+  buttons.forEach((button, index) => button.setAttribute('aria-current', String(entries[index] === entry)));
+  $('elapsed').textContent = '0:00';
+  $('duration').textContent = '0:00';
+  $('position').value = 0;
+  createPlayer(0, resume);
 }
+$('back').addEventListener('click', () => act(() => player.seek(Math.max(0, player.getCurrentTime() - 5))));
+$('forward').addEventListener('click', () => act(() => player.seek(Math.min(player.getDuration(), player.getCurrentTime() + 5))));
+$('toggle').addEventListener('click', () => act(() => playing ? player.pause() : player.play()));
+$('position').addEventListener('input', () => act(() => player.seek(Number($('position').value))));
+$('speed').addEventListener('click', () => {
+  speed = speeds[(speeds.indexOf(speed) + 1) % speeds.length];
+  createPlayer(player.getCurrentTime(), playing);
+});
+const timer = setInterval(syncPosition, 250);
+window.addEventListener('pagehide', event => {
+  if (!event.persisted) { clearInterval(timer); player?.dispose(); }
+});
+$('export').addEventListener('click', () => act(() => {
+  const copy = document.documentElement.cloneNode(true);
+  const exported = { root: data.root, rootPath: '', exported: true, recordings: [{ ...selected.recording, gif: false }] };
+  copy.querySelector('#data').textContent = JSON.stringify(exported);
+  copy.querySelector('#recordings').replaceChildren();
+  copy.querySelector('#player').replaceChildren();
+  copy.querySelector('#cleanup').removeAttribute('open');
+  for (const id of ['notice', 'error', 'cleanup-error', 'cleanup-command']) copy.querySelector(`#${id}`).textContent = '';
+  for (const id of ['notice', 'error', 'cleanup-error']) copy.querySelector(`#${id}`).hidden = true;
+  const blob = new Blob(['<!doctype html>\n', copy.outerHTML], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${selected.slug}-${selected.stamp}.html`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  message('notice', 'Save download started: recording, context, and text log in one HTML file. Check it was saved before deleting the original.');
+}));
+function manifest() {
+  return entries.flatMap(({ slug, stamp, recording }) => {
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || !/^\d{8}-\d{6}-\d{3}$/.test(stamp)) {
+      throw new Error('Unsafe recording path. Cleanup stopped; inspect the folder manually.');
+    }
+    return [
+      `${slug}/${stamp}.cast`,
+      ...(recording.log ? [`${slug}/${stamp}.stdout.log`] : []),
+      ...(recording.meta ? [`${slug}/${stamp}.meta.json`] : []),
+      ...(recording.gif ? [`${slug}/${stamp}.gif`] : [])
+    ];
+  }).concat('index.html');
+}
+const quoteShell = value => "'" + value.replaceAll("'", "'\\''") + "'";
+$('nuke').addEventListener('click', () => act(() => {
+  const files = manifest();
+  const path = rootPath || rootName;
+  if (!path) throw new Error('The recordings folder is unknown. Inspect it manually before cleanup.');
+  $('cleanup-summary').textContent = `${entries.length} recording(s), ${files.length} files in ${path}. This includes every recording listed below, not just the selected one.`;
+  $('cleanup-command').textContent = '# Confirm this folder and listed files still match the page before running.\n' +
+    files.map(file => `rm -f -- ${quoteShell(`${path}/${file}`)}`).join('\n');
+  const supported = typeof window.showDirectoryPicker === 'function' && window.isSecureContext;
+  $('fallback').hidden = supported;
+  $('delete-files').hidden = !supported;
+  message('cleanup-error', '');
+  $('cleanup').showModal();
+}));
+$('cancel-cleanup').addEventListener('click', () => $('cleanup').close());
+$('delete-files').addEventListener('click', async () => {
+  let deleted = 0;
+  const button = $('delete-files');
+  button.disabled = true;
+  message('cleanup-error', '');
+  try {
+    const folder = await window.showDirectoryPicker({ mode: 'readwrite' });
+    const index = await folder.getFileHandle('index.html');
+    const html = await (await index.getFile()).text();
+    const saved = new DOMParser().parseFromString(html, 'text/html').getElementById('data');
+    if (folder.name !== rootName || !saved || JSON.stringify(JSON.parse(saved.textContent)) !== snapshot) {
+      throw new Error('Folder or index differs from this page. Nothing was deleted. Reopen the current index before cleanup.');
+    }
+    const files = manifest();
+    const targets = [];
+    // Resolve every target before deleting, so missing files stop cleanup up front.
+    for (const file of files) {
+      const parts = file.split('/');
+      const parent = parts.length === 2 ? await folder.getDirectoryHandle(parts[0]) : folder;
+      const name = parts[parts.length - 1];
+      await parent.getFileHandle(name);
+      targets.push({ parent, name });
+    }
+    if (!window.confirm(`Permanently delete these ${files.length} proof files from "${folder.name}"? Check any export was saved. Unrelated files will be kept.`)) return;
+    for (const target of targets) {
+      await target.parent.removeEntry(target.name);
+      deleted++;
+    }
+    $('cleanup').close();
+    ++generation;
+    player?.dispose();
+    player = null;
+    clearInterval(timer);
+    $('capture').hidden = true;
+    message('notice', 'Proof files deleted. Unrelated files, exported copies, and empty folders were kept. You can close this page.');
+  } catch (error) {
+    if (error.name === 'AbortError' && deleted === 0) {
+      message('cleanup-error', 'Folder selection canceled. Nothing was deleted.');
+    } else {
+      message('cleanup-error', `Deleted ${deleted} file(s). ${error.message} Remaining files were kept.`);
+      $('fallback').hidden = false;
+    }
+  } finally { button.disabled = false; }
+});
+if (entries.length) show(entries[0]);
 </script>
-
 </body>
 </html>

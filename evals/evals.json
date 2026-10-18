@@ -1,0 +1,48 @@
+{
+  "skill_name": "proofcast",
+  "evals": [
+    {
+      "id": 1,
+      "name": "scale-and-inference",
+      "prompt": "Prove that a worker scales from zero and runs inference. The inspected ./verify-worker.sh has shebang #!/opt/homebrew/bin/bash -e and invokes ./infer.sh, which has the same shebang. The scripts accept interpreter flags only through editing their invocation sites. No credentials are printed. Give the actual recorder invocation(s), necessary tracing changes, proposed recording context, and a brief handoff. Simulated output: one worker starts, inference returns a prediction, both exit 0. This is a planning evaluation: do not run infrastructure or create recordings.",
+      "expected_output": "Preserve interpreter and -e, trace parent and child, provide concise assertion and justification per capture, capture real invocation, and state scale-from-zero remains unproven without an observed initial worker count.",
+      "files": [],
+      "assertions": [
+        "Preserves /opt/homebrew/bin/bash and -e while adding -x for parent and child.",
+        "Supplies --assertion and --justification in every proposed recorder invocation.",
+        "Assertion and justification total no more than two sentences per capture.",
+        "Explains how the command demonstrates scaling and inference without substituting printed claims for execution.",
+        "Handoff reports absolute recording directory, clickable index, and exact stop sentence; asks permission to open.",
+        "Does not claim scale-from-zero is demonstrated without an initial zero-worker observation."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "partial-evidence",
+      "prompt": "Prove that the cache survives a restart by recording ./check-cache.sh. Its inspected shebang is #!/bin/bash -e; it has no child scripts and prints no secrets. Give recorder invocation, context, and handoff. Simulated output: cache write succeeded; restart skipped because service unavailable; command exits 0. The user already asked you to open the recording page. This is a planning evaluation: do not run services or create recordings.",
+      "expected_output": "Concise intended assertion and justification, preserve -e and interpreter, report persistence is unproven despite exit 0, no redundant permission question.",
+      "files": [],
+      "assertions": [
+        "Supplies --assertion and --justification with no more than two sentences total.",
+        "Preserves /bin/bash -e and adds execution tracing.",
+        "Explicitly states restart persistence remains unproven despite zero exit status.",
+        "Does not rewrite intended context into a false success claim.",
+        "Does not ask permission to open when permission is already explicit."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "failed-proof-and-cleanup",
+      "prompt": "Record ./smoke.sh to prove the new endpoint responds. It has an inspected #!/bin/bash -e shebang, no child scripts, and prints no secrets. Give recorder invocation, context, and handoff. Simulated output: connection refused; exit status 7. I am reviewing on mobile: export this capture and then nuke the proof. Browser folder access is unavailable, export has not been confirmed, and the chosen recordings root /tmp/review-proof also contains unrelated notes.txt. Explain what you can do next without pretending browser deletion worked or deleting unrelated files. This is a planning evaluation: do not execute deletion, network calls, or recordings.",
+      "expected_output": "Record real command and concise context, state failed assertion and status 7, explain export confirmation and narrow cleanup fallback, preserve unrelated files and infrastructure.",
+      "files": [],
+      "assertions": [
+        "Supplies concise --assertion and --justification and traces the real script.",
+        "Reports exit status 7 and states the endpoint assertion was not demonstrated.",
+        "Describes portable HTML export and does not claim the export has already completed.",
+        "Uses explicit file-scoped cleanup rather than recursively deleting the root or notes.txt.",
+        "Does not claim browser deletion succeeded; waits for export confirmation before destructive cleanup."
+      ]
+    }
+  ]
+}

@@ -36,7 +36,8 @@ encode() {
 # Text the recording controls travels as base64, so no terminal output can
 # break out of the JSON or the surrounding page.
 emit_data() {
-  printf '{"root":"%s","recordings":[' "$(printf '%s' "${root##*/}" | encode)"
+  printf '{"root":"%s","rootPath":"%s","recordings":[' \
+    "$(printf '%s' "${root##*/}" | encode)" "$(printf '%s' "$root" | encode)"
 
   local separator=
   local cast slug stamp command_line
@@ -49,12 +50,14 @@ emit_data() {
       IFS= read -r command_line <"$root/$slug/$stamp.stdout.log" || true
     command_line=${command_line#'$ '}
 
-    printf '%s\n{"slug":"%s","stamp":"%s","command":"%s","cast":"%s","gif":%s}' \
+    printf '%s\n{"slug":"%s","stamp":"%s","command":"%s","cast":"%s","log":"%s","meta":"%s","gif":%s}' \
       "$separator" \
       "$(printf '%s' "$slug" | encode)" \
       "$(printf '%s' "$stamp" | encode)" \
       "$(printf '%s' "$command_line" | encode)" \
       "$(encode "$cast")" \
+      "$([[ ! -f "$root/$slug/$stamp.stdout.log" ]] || encode "$root/$slug/$stamp.stdout.log")" \
+      "$([[ ! -f "$root/$slug/$stamp.meta.json" ]] || encode "$root/$slug/$stamp.meta.json")" \
       "$([[ -f "$root/$slug/$stamp.gif" ]] && echo true || echo false)"
     separator=,
   done
